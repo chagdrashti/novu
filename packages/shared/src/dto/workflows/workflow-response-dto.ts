@@ -1,5 +1,5 @@
 import { IsArray, IsDefined, IsEnum, IsObject, IsString } from 'class-validator';
-import { PreferencesResponseDto, StepResponseDto, WorkflowCommonsFields } from './workflow-commons-fields';
+import { PreferencesResponseDto, StepResponseDto, WorkflowCommonsFields } from './workflow-response.dto';
 import { Base62Id, Slug, WorkflowOriginEnum, WorkflowTypeEnum } from '../../types';
 import { WorkflowStatusEnum } from './workflow-status-enum';
 
