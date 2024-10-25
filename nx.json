@@ -15,7 +15,7 @@
       "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
     }
   },
-  "extends": "@nrwl/workspace/presets/npm.json",
+  "extends": "@nx/workspace/presets/npm.json",
   "tasksRunnerOptions": {
     "default": {
       "options": {
