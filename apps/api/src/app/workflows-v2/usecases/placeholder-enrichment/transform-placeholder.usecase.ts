@@ -1,5 +1,14 @@
-import { PlaceholderMap } from './collect-placeholders-from-tip-tap-schema.usecase';
-
+export type PlaceholderMap = {
+  for?: {
+    [key: string]: string[];
+  };
+  show?: {
+    [key: string]: any[];
+  };
+  regular?: {
+    [key: string]: any[];
+  };
+};
 export class TransformPlaceholderMapCommand {
   input: PlaceholderMap;
 }

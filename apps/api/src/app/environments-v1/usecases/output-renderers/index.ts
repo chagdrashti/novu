@@ -5,3 +5,5 @@ export * from './push-output-renderer.usecase';
 export * from './sms-output-renderer.usecase';
 export * from './in-app-output-renderer.usecase';
 export * from './email-schema-expander.usecase';
+export { HydrateEmailSchemaUseCase } from './hydrate-email-schema.usecase';
+export { HydrateEmailSchemaCommand } from './hydrate-email-schema.command';

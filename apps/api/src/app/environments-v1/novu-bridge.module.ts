@@ -14,6 +14,7 @@ import {
   PushOutputRendererUsecase,
   SmsOutputRendererUsecase,
 } from './usecases/output-renderers';
+import { HydrateEmailSchemaUseCase } from './usecases/output-renderers/hydrate-email-schema.usecase';
 
 @Module({
   controllers: [NovuBridgeController],
@@ -34,6 +35,7 @@ import {
     PushOutputRendererUsecase,
     EmailOutputRendererUsecase,
     ExpandEmailEditorSchemaUsecase,
+    HydrateEmailSchemaUseCase,
   ],
 })
 export class NovuBridgeModule {}

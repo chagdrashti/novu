@@ -21,6 +21,12 @@ import {
   SmsOutputRendererUsecase,
 } from '../output-renderers';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface MasterPayload {
+  subscriber: Record<string, unknown>;
+  payload: Record<string, unknown>;
+  steps: Record<string, unknown>; // step.stepId.unknown
+}
 @Injectable()
 export class ConstructFrameworkWorkflow {
   constructor(
@@ -46,9 +52,14 @@ export class ConstructFrameworkWorkflow {
   private constructFrameworkWorkflow(newWorkflow: NotificationTemplateEntity): Workflow {
     return workflow(
       newWorkflow.triggers[0].identifier,
-      async ({ step }) => {
+      async ({ step, payload, subscriber }) => {
+        const masterPayload: MasterPayload = { payload, subscriber, steps: {} };
         for await (const staticStep of newWorkflow.steps) {
-          await this.constructStep(step, staticStep);
+          masterPayload.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
+            step,
+            staticStep,
+            masterPayload
+          );
         }
       },
       {
@@ -66,7 +77,11 @@ export class ConstructFrameworkWorkflow {
     );
   }
 
-  private constructStep(step: Step, staticStep: NotificationStepEntity): StepOutput<Record<string, unknown>> {
+  private constructStep(
+    step: Step,
+    staticStep: NotificationStepEntity,
+    masterPayload: MasterPayload
+  ): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
@@ -100,7 +115,7 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            return this.emailOutputRendererUseCase.execute({ controlValues });
+            return this.emailOutputRendererUseCase.execute({ controlValues, masterPayload });
           },
           this.constructChannelStepOptions(staticStep)
         );

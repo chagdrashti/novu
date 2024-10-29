@@ -1,44 +1,49 @@
 import { EmailRenderOutput, TipTapNode } from '@novu/shared';
-import { render } from '@maily-to/render';
 import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
+import { render } from '@maily-to/render';
 import { RenderCommand } from './render-command';
+import { MasterPayload } from '../construct-framework-workflow';
 import { ExpandEmailEditorSchemaUsecase } from './email-schema-expander.usecase';
+import { HydrateEmailSchemaUseCase } from './hydrate-email-schema.usecase';
+
+export class EmailOutputRendererCommand extends RenderCommand {
+  masterPayload: MasterPayload;
+}
 
 @Injectable()
 export class EmailOutputRendererUsecase {
-  constructor(private expendEmailEditorSchemaUseCase: ExpandEmailEditorSchemaUsecase) {}
+  constructor(
+    private expendEmailEditorSchemaUseCase: ExpandEmailEditorSchemaUsecase,
+    private hydrateEmailSchemaUseCase: HydrateEmailSchemaUseCase // Inject the new use case
+  ) {}
 
-  async execute(renderCommand: RenderCommand): Promise<EmailRenderOutput> {
-    const parse = EmailStepControlSchema.parse(renderCommand.controlValues);
-    const schema = parse.emailEditor as TipTapNode;
-    const expandedSchema = this.expendEmailEditorSchemaUseCase.execute({ schema });
-    const html = await render(expandedSchema);
+  async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
+    const { emailEditor, subject } = EmailStepControlSchema.parse(renderCommand.controlValues);
+    const emailSchemaHydrated = this.hydrate(emailEditor, renderCommand);
+    const expandedSchema = this.transformForAndShowLogic(emailSchemaHydrated);
+    const htmlRendered = await render(expandedSchema);
 
-    return { subject: parse.subject, body: html };
+    return { subject, body: htmlRendered };
+  }
+
+  private transformForAndShowLogic(body: TipTapNode) {
+    return this.expendEmailEditorSchemaUseCase.execute({ schema: body });
+  }
+
+  private hydrate(emailEditor: string, renderCommand: EmailOutputRendererCommand) {
+    const { hydratedEmailSchema } = this.hydrateEmailSchemaUseCase.execute({
+      emailEditor,
+      masterPayload: renderCommand.masterPayload,
+    });
+
+    return hydratedEmailSchema;
   }
 }
-const emailContentSchema = z
-  .object({
-    type: z.string(),
-    content: z.array(z.lazy(() => emailContentSchema)).optional(),
-    text: z.string().optional(),
-    attr: z.record(z.unknown()).optional(),
-  })
-  .strict();
-
-const emailEditorSchema = z
-  .object({
-    type: z.string(),
-    content: z.array(emailContentSchema).optional(),
-    text: z.string().optional(),
-    attr: z.record(z.unknown()).optional(),
-  })
-  .strict();
 
 export const EmailStepControlSchema = z
   .object({
-    emailEditor: emailEditorSchema,
+    emailEditor: z.string(),
     subject: z.string(),
   })
   .strict();

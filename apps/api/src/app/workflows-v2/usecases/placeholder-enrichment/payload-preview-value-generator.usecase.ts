@@ -1,17 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { TipTapNode } from '@novu/shared';
 import { TransformPlaceholderMapUseCase } from './transform-placeholder.usecase';
-import {
-  CollectPlaceholdersFromTipTapSchemaUsecase,
-  extractPlaceholders,
-} from './collect-placeholders-from-tip-tap-schema.usecase';
 import { AddKeysToPayloadBasedOnHydrationStrategyCommand } from './add-keys-to-payload-based-on-hydration-strategy-command';
+import { HydrateEmailSchemaUseCase } from '../../../environments-v1/usecases/output-renderers';
 
 @Injectable()
-export class CreateMockPayloadUseCase {
+export class CreateMockPayloadForSingleControlValueUseCase {
   constructor(
-    private readonly collectPlaceholdersFromTipTapSchemaUsecase: CollectPlaceholdersFromTipTapSchemaUsecase,
-    private readonly transformPlaceholderMapUseCase: TransformPlaceholderMapUseCase
+    private readonly transformPlaceholderMapUseCase: TransformPlaceholderMapUseCase,
+    private hydrateEmailSchemaUseCase: HydrateEmailSchemaUseCase
   ) {}
 
   public execute(command: AddKeysToPayloadBasedOnHydrationStrategyCommand): Record<string, unknown> {
@@ -22,20 +18,29 @@ export class CreateMockPayloadUseCase {
     }
 
     const controlValue = controlValues[controlValueKey];
-    if (typeof controlValue === 'object') {
-      return this.buildPayloadForEmailEditor(controlValue);
+    const safeAttemptToParseEmailSchema = this.safeAttemptToParseEmailSchema(controlValue);
+    if (safeAttemptToParseEmailSchema) {
+      return safeAttemptToParseEmailSchema;
     }
 
     return this.buildPayloadForRegularText(controlValue);
   }
 
-  private buildPayloadForEmailEditor(controlValue: unknown): Record<string, unknown> {
-    const collectPlaceholderMappings = this.collectPlaceholdersFromTipTapSchemaUsecase.execute({
-      node: controlValue as TipTapNode,
-    });
-    const transformPlaceholderMap = this.transformPlaceholderMapUseCase.execute({ input: collectPlaceholderMappings });
+  private safeAttemptToParseEmailSchema(controlValue: string) {
+    try {
+      const { nestedPayload } = this.hydrateEmailSchemaUseCase.execute({
+        emailEditor: controlValue,
+        masterPayload: {
+          payload: {},
+          subscriber: {},
+          steps: {},
+        },
+      });
 
-    return transformPlaceholderMap.payload;
+      return nestedPayload;
+    } catch (e) {
+      return undefined;
+    }
   }
 
   private buildPayloadForRegularText(controlValue: unknown) {
@@ -48,7 +53,21 @@ export class CreateMockPayloadUseCase {
     }).payload;
   }
 }
+export function extractPlaceholders(text: string): string[] {
+  const regex = /\{\{\{(.*?)\}\}\}|\{\{(.*?)\}\}|\{#(.*?)#\}/g; // todo: add support for nested placeholders
+  const matches: string[] = [];
+  let match: RegExpExecArray | null;
 
+  // eslint-disable-next-line no-cond-assign
+  while ((match = regex.exec(text)) !== null) {
+    const placeholder = match[1] || match[2] || match[3];
+    if (placeholder) {
+      matches.push(placeholder.trim());
+    }
+  }
+
+  return matches;
+}
 function convertToRecord(keys: string[]): Record<string, any> {
   return keys.reduce(
     (acc, key) => {
