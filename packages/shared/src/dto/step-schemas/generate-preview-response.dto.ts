@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '../../types';
-import { ControlPreviewIssueTypeEnum } from './control-preview-issue-type.enum';
+import { ControlPreviewIssue } from '../workflows';
 
 export class RenderOutput {}
 
@@ -52,12 +52,6 @@ export class InAppRenderOutput extends RenderOutput {
     url: string;
     target?: RedirectTargetEnum;
   };
-}
-
-export class ControlPreviewIssue {
-  issueType: ControlPreviewIssueTypeEnum;
-  variableName?: string;
-  message: string;
 }
 
 export class GeneratePreviewResponseDto {

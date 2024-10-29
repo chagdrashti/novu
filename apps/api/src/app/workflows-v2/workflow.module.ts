@@ -26,6 +26,7 @@ import { CollectPlaceholdersFromTipTapSchemaUsecase } from './usecases/placehold
 import { TransformPlaceholderMapUseCase } from './usecases/placeholder-enrichment/transform-placeholder.usecase';
 import { WorkflowTestDataUseCase } from './usecases/test-data/test-data.usecase';
 import { GetStepDataUsecase } from './usecases/get-step-schema/get-step-data.usecase';
+import { ValidateControlValuesAndAddDefaultsUseCase } from './usecases/validate-control-values/validate-control-values-and-add-defaults.usecase';
 
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],
@@ -49,6 +50,7 @@ import { GetStepDataUsecase } from './usecases/get-step-schema/get-step-data.use
     ExtractDefaultsUsecase,
     CollectPlaceholdersFromTipTapSchemaUsecase,
     TransformPlaceholderMapUseCase,
+    ValidateControlValuesAndAddDefaultsUseCase,
     WorkflowTestDataUseCase,
   ],
 })
