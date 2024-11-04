@@ -34,7 +34,7 @@ export class ConstructPayloadFromPlaceholdersWithDefaultsUseCase {
     }
 
     return {
-      augmentedPayload: _.merge(aggregatedDefaultValues, payloadValues),
+      augmentedPayload: _.merge(aggregatedDefaultValues, { payload: payloadValues }),
       issues: this.buildVariableMissingIssueRecord(
         aggregatedDefaultValuesForControl,
         aggregatedDefaultValues,

@@ -206,8 +206,11 @@ describe('Generate Preview', () => {
   ): Promise<GeneratePreviewResponseDto> {
     const novuRestResult = await workflowsClient.generatePreview(workflowId, stepDatabaseId, dto);
     if (novuRestResult.isSuccessResult()) {
+      console.log('previewResponseDto.exampleMasterPayload', novuRestResult.value.exampleMasterPayload);
+
       return novuRestResult.value;
     }
+
     throw await assertHttpError(description, novuRestResult);
   }
 
@@ -267,7 +270,7 @@ function buildSimpleForEmail(): EmailStepControlSchemaDto {
 }
 function buildInAppControlValues(): InAppOutput {
   return {
-    subject: `Hello, World! ${PLACEHOLDER_SUBJECT_INAPP}`,
+    subject: `{{subscriber.firstName}} Hello, World! ${PLACEHOLDER_SUBJECT_INAPP}`,
     body: 'Hello, World! {{payload.placeholder.body}}',
     avatar: 'https://www.example.com/avatar.png',
     primaryAction: {
