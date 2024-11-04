@@ -22,11 +22,11 @@ import { BridgeModule } from '../bridge';
 import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview.usecase';
 import { CreateMockPayloadForSingleControlValueUseCase } from './usecases/placeholder-enrichment/payload-preview-value-generator.usecase';
 import { ExtractDefaultsUsecase } from './usecases/get-default-values-from-schema/extract-defaults.usecase';
-import { TransformPlaceholderMapUseCase } from './usecases/placeholder-enrichment/transform-placeholder.usecase';
 import { ConstructPayloadFromPlaceholdersWithDefaultsUseCase } from './usecases/generate-preview/construct-payload-from-placeholders-with-defaults-use-case.service';
 import { HydrateEmailSchemaUseCase } from '../environments-v1/usecases/output-renderers';
 import { WorkflowTestDataUseCase } from './usecases/test-data/test-data.usecase';
 import { GetStepDataUsecase } from './usecases/get-step-schema/get-step-data.usecase';
+import { BuildPayloadNestedStructureUsecase } from './usecases/placeholder-enrichment/buildPayloadNestedStructureUsecase';
 
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],
@@ -45,12 +45,9 @@ import { GetStepDataUsecase } from './usecases/get-step-schema/get-step-data.use
     SyncToEnvironmentUseCase,
     GetStepDataUsecase,
     GeneratePreviewUsecase,
-    GetWorkflowUseCase,
-    CreateMockPayloadUseCase,
-    GetPreferences,
     CreateMockPayloadForSingleControlValueUseCase,
     ExtractDefaultsUsecase,
-    TransformPlaceholderMapUseCase,
+    BuildPayloadNestedStructureUsecase,
     WorkflowTestDataUseCase,
     ConstructPayloadFromPlaceholdersWithDefaultsUseCase,
     HydrateEmailSchemaUseCase,

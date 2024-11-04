@@ -225,7 +225,7 @@ export class UpsertWorkflowUseCase {
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
       type: WorkflowTypeEnum.BRIDGE,
       origin: WorkflowOriginEnum.NOVU_CLOUD,
-      steps: this.mapStepsForUpdate(workflowDto.steps),
+      steps: this.mapSteps(workflowDto.steps),
       payloadSchema: {},
       active: isWorkflowActive,
       description: workflowDto.description || '',
@@ -271,6 +271,8 @@ export class UpsertWorkflowUseCase {
 
       steps.push(mappedStep);
     }
+
+    return steps;
   }
 
   private generateUniqueStepId(baseStepId: string, previousStepIds: string[]): string {

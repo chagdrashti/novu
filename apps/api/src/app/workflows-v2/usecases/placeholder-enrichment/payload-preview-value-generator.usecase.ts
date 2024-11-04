@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { TransformPlaceholderMapUseCase } from './transform-placeholder.usecase';
 import { AddKeysToPayloadBasedOnHydrationStrategyCommand } from './add-keys-to-payload-based-on-hydration-strategy-command';
 import { HydrateEmailSchemaUseCase } from '../../../environments-v1/usecases/output-renderers';
+import {
+  BuildPayloadNestedStructureCommand,
+  BuildPayloadNestedStructureUsecase,
+} from './buildPayloadNestedStructureUsecase';
 
+const allowedPlaceholderPrefixes: string[] = ['subscriber', 'actor', 'payload'];
 @Injectable()
 export class CreateMockPayloadForSingleControlValueUseCase {
   constructor(
-    private readonly transformPlaceholderMapUseCase: TransformPlaceholderMapUseCase,
+    private readonly transformPlaceholderMapUseCase: BuildPayloadNestedStructureUsecase,
     private hydrateEmailSchemaUseCase: HydrateEmailSchemaUseCase
   ) {}
 
@@ -44,13 +48,13 @@ export class CreateMockPayloadForSingleControlValueUseCase {
   }
 
   private buildPayloadForRegularText(controlValue: unknown) {
-    const strings = extractPlaceholders(controlValue as string).filter(
+    const placeholders = extractPlaceholders(controlValue as string).filter(
       (placeholder) => !placeholder.startsWith('subscriber') && !placeholder.startsWith('actor')
     );
 
-    return this.transformPlaceholderMapUseCase.execute({
-      input: { regular: convertToRecord(strings) },
-    }).payload;
+    return this.transformPlaceholderMapUseCase.execute(
+      BuildPayloadNestedStructureCommand.create({ placeholdersDotNotation: placeholders })
+    );
   }
 }
 export function extractPlaceholders(text: string): string[] {

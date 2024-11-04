@@ -3,7 +3,7 @@ import {
   ChannelTypeEnum,
   ControlPreviewIssue,
   ControlPreviewIssueTypeEnum,
-  ControlsSchema,
+  ControlSchemas,
   GeneratePreviewResponseDto,
   JSONSchemaDto,
   StepTypeEnum,
@@ -13,9 +13,6 @@ import { merge } from 'lodash/fp';
 import _ = require('lodash');
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { GetWorkflowUseCase } from '../get-workflow/get-workflow.usecase';
-import { StepNotFoundException } from '../../exceptions/step-not-found-exception';
-import { CreateMockPayloadUseCase } from '../placeholder-enrichment/payload-preview-value-generator.usecase';
 import { StepMissingControlsException, StepNotFoundException } from '../../exceptions/step-not-found-exception';
 import { ExtractDefaultsUsecase } from '../get-default-values-from-schema/extract-defaults.usecase';
 import { ConstructPayloadFromPlaceholdersWithDefaultsUseCase } from './construct-payload-from-placeholders-with-defaults-use-case.service';
@@ -27,18 +24,22 @@ export class GeneratePreviewUsecase {
   constructor(
     private legacyPreviewStepUseCase: PreviewStep,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private createMockPayloadUseCase: CreateMockPayloadUseCase,
     private extractDefaultsUseCase: ExtractDefaultsUsecase,
     private constructPayloadUseCase: ConstructPayloadFromPlaceholdersWithDefaultsUseCase
-
-
   ) {}
 
   async execute(command: GeneratePreviewCommand): Promise<GeneratePreviewResponseDto> {
     const payloadHydrationInfo = this.buildPayloadIfMissing(command);
     const workflowInfo = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
     const controlValuesResult = this.addMissingValuesToControlValues(command, workflowInfo.stepControlSchema);
-    const executeOutput = await this.executePreview(workflowInfo, payloadHydrationInfo, controlValuesResult, command);
+    const executeOutput = await this.executePreviewUsecase(
+      workflowInfo.workflowId,
+      workflowInfo.stepId,
+      workflowInfo.origin,
+      payloadHydrationInfo.augmentedPayload,
+      controlValuesResult.augmentedControlValues,
+      command
+    );
 
     return buildResponse(
       controlValuesResult.issuesMissingValues,
@@ -52,34 +53,6 @@ export class GeneratePreviewUsecase {
     const { controlValues, payloadValues } = command.generatePreviewRequestDto;
 
     return this.constructPayloadUseCase.execute(controlValues, payloadValues);
-  }
-
-  private async executePreview(
-    workflowInfo: {
-      stepControlSchema: ControlsSchema;
-      stepType: StepTypeEnum;
-      origin: WorkflowOriginEnum;
-      stepId: string;
-      workflowId: string;
-    },
-    payloadHydrationInfo: {
-      augmentedPayload: Record<string, unknown>;
-      issues: Record<string, ControlPreviewIssue[]>;
-    },
-    controlValuesResult: {
-      augmentedControlValues: Record<string, unknown>;
-      issuesMissingValues: Record<string, ControlPreviewIssue[]>;
-    },
-    command: GeneratePreviewCommand
-  ) {
-    return await this.executePreviewUsecase(
-      workflowInfo.workflowId,
-      workflowInfo.stepId,
-      workflowInfo.origin,
-      payloadHydrationInfo.augmentedPayload,
-      controlValuesResult.augmentedControlValues,
-      command
-    );
   }
 
   private addMissingValuesToControlValues(command: GeneratePreviewCommand, stepControlSchema: ControlSchemas) {

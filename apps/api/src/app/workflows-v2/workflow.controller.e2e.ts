@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { randomBytes } from 'crypto';
 import {
+  createWorkflowClient,
   CreateWorkflowDto,
   DEFAULT_WORKFLOW_PREFERENCES,
   isStepUpdateBody,
@@ -22,7 +23,6 @@ import {
   WorkflowListResponseDto,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { createWorkflowClient } from './clients';
 
 import { encodeBase62 } from '../shared/helpers';
 import { stepTypeToDefaultDashboardControlSchema } from './shared';

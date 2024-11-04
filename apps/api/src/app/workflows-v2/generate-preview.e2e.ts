@@ -5,14 +5,16 @@ import { after, beforeEach } from 'mocha';
 import { sleep } from '@nestjs/terminus/dist/utils';
 import {
   ChannelTypeEnum,
+  createWorkflowClient,
   EmailStepControlSchemaDto,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
+  HttpError,
+  NovuRestResult,
   RedirectTargetEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import { InAppOutput } from '@novu/framework/internal';
-import { createWorkflowClient, HttpError, NovuRestResult } from './clients';
 import { buildCreateWorkflowDto } from './workflow.controller.e2e';
 import { forSnippet, fullCodeSnippet } from './maily-test-data';
 
@@ -78,10 +80,10 @@ describe('Generate Preview', () => {
     describe('email specific features', () => {
       describe('show', () => {
         it('show -> should hide element based on payload', async () => {
-          const { stepUuid, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
+          const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
           const previewResponseDto = await generatePreview(
             workflowId,
-            stepUuid,
+            stepDatabaseId,
             {
               validationStrategies: [],
               controlValues: stepTypeTo[StepTypeEnum.EMAIL],
@@ -95,10 +97,10 @@ describe('Generate Preview', () => {
           expect(preview).to.not.contain('should be the fallback value');
         });
         it('show -> should show element based on payload - string', async () => {
-          const { stepUuid, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
+          const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
           const previewResponseDto = await generatePreview(
             workflowId,
-            stepUuid,
+            stepDatabaseId,
             {
               validationStrategies: [],
               controlValues: stepTypeTo[StepTypeEnum.EMAIL],
@@ -112,10 +114,10 @@ describe('Generate Preview', () => {
           expect(preview).to.contain('should be the fallback value');
         });
         it('show -> should show element based on payload - boolean', async () => {
-          const { stepUuid, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
+          const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
           const previewResponseDto = await generatePreview(
             workflowId,
-            stepUuid,
+            stepDatabaseId,
             {
               validationStrategies: [],
               controlValues: stepTypeTo[StepTypeEnum.EMAIL],
@@ -129,10 +131,10 @@ describe('Generate Preview', () => {
           expect(preview).to.contain('should be the fallback value');
         });
         it('show -> should show element if payload is missing', async () => {
-          const { stepUuid, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
+          const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
           const previewResponseDto = await generatePreview(
             workflowId,
-            stepUuid,
+            stepDatabaseId,
             {
               validationStrategies: [],
               controlValues: stepTypeTo[StepTypeEnum.EMAIL],
@@ -148,12 +150,12 @@ describe('Generate Preview', () => {
       });
       describe('for', () => {
         it('should populate for if payload exist with actual values', async () => {
-          const { stepUuid, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
+          const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(StepTypeEnum.EMAIL);
           const name1 = 'ball is round';
           const name2 = 'square is square';
           const previewResponseDto = await generatePreview(
             workflowId,
-            stepUuid,
+            stepDatabaseId,
             {
               validationStrategies: [],
               controlValues: buildSimpleForEmail() as unknown as Record<string, unknown>,
@@ -251,8 +253,6 @@ function buildDtoWithMissingControlValues(stepTypeEnum: StepTypeEnum): GenerateP
   };
 }
 
-const HEADING_PLACEHOLDER = '{{payload.replacement.subject}}';
-
 function buildEmailControlValuesPayload(): EmailStepControlSchemaDto {
   return {
     subject: `Hello, World! ${SUBJECT_TEST_PAYLOAD}`,
@@ -313,8 +313,6 @@ function buildChatControlValuesPayload() {
   };
 }
 
-const FOR_ITEM_VALUE_PLACEHOLDER = '{#item.body#}';
-const TEST_SHOW_VALUE = 'TEST_SHOW_VALUE';
 const stepTypeTo = {
   [StepTypeEnum.SMS]: buildSmsControlValuesPayload(),
   [StepTypeEnum.EMAIL]: buildEmailControlValuesPayload() as unknown as Record<string, unknown>,
