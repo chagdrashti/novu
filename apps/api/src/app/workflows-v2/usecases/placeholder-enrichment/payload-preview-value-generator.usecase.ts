@@ -22,9 +22,9 @@ export class CreateMockPayloadForSingleControlValueUseCase {
     }
 
     const controlValue = controlValues[controlValueKey];
-    const safeAttemptToParseEmailSchema = this.safeAttemptToParseEmailSchema(controlValue);
-    if (safeAttemptToParseEmailSchema) {
-      return safeAttemptToParseEmailSchema;
+    const payloadFromEmailSchema = this.safeAttemptToParseEmailSchema(controlValue);
+    if (payloadFromEmailSchema) {
+      return payloadFromEmailSchema;
     }
 
     return this.buildPayloadForRegularText(controlValue);

@@ -1,8 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { Injectable } from '@nestjs/common';
-import { TipTapNode } from '@novu/shared';
+import { MasterPayload, TipTapNode } from '@novu/shared';
 import { z } from 'zod';
-import { MasterPayload } from '../construct-framework-workflow';
 import { HydrateEmailSchemaCommand } from './hydrate-email-schema.command';
 
 @Injectable()

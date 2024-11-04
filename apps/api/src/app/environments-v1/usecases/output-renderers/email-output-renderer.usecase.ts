@@ -1,9 +1,8 @@
-import { EmailRenderOutput, TipTapNode } from '@novu/shared';
+import { EmailRenderOutput, MasterPayload, TipTapNode } from '@novu/shared';
 import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
 import { render } from '@maily-to/render';
 import { RenderCommand } from './render-command';
-import { MasterPayload } from '../construct-framework-workflow';
 import { ExpandEmailEditorSchemaUsecase } from './email-schema-expander.usecase';
 import { HydrateEmailSchemaUseCase } from './hydrate-email-schema.usecase';
 

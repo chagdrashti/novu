@@ -6,6 +6,7 @@ import {
   ControlSchemas,
   GeneratePreviewResponseDto,
   JSONSchemaDto,
+  MasterPayload,
   StepTypeEnum,
   WorkflowOriginEnum,
 } from '@novu/shared';
@@ -45,7 +46,8 @@ export class GeneratePreviewUsecase {
       controlValuesResult.issuesMissingValues,
       payloadHydrationInfo.issues,
       executeOutput,
-      workflowInfo.stepType
+      workflowInfo.stepType,
+      payloadHydrationInfo.augmentedPayload
     );
   }
 
@@ -94,7 +96,7 @@ export class GeneratePreviewUsecase {
     workflowId: string,
     stepId: string | undefined,
     origin: WorkflowOriginEnum | undefined,
-    hydratedPayload: Record<string, unknown>,
+    hydratedPayload: MasterPayload,
     updatedControlValues: Record<string, unknown>,
     command: GeneratePreviewCommand
   ) {
@@ -107,7 +109,8 @@ export class GeneratePreviewUsecase {
 
     return await this.legacyPreviewStepUseCase.execute(
       PreviewStepCommand.create({
-        payload: hydratedPayload,
+        payload: hydratedPayload.payload,
+        subscriber: hydratedPayload.subscriber,
         controls: updatedControlValues || {},
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
@@ -147,7 +150,8 @@ function buildResponse(
   missingValuesIssue: Record<string, ControlPreviewIssue[]>,
   missingPayloadVariablesIssue: Record<string, ControlPreviewIssue[]>,
   executionOutput,
-  stepType: StepTypeEnum
+  stepType: StepTypeEnum,
+  augmentedPayload: MasterPayload
 ): GeneratePreviewResponseDto {
   return {
     issues: merge(missingValuesIssue, missingPayloadVariablesIssue),
@@ -155,6 +159,7 @@ function buildResponse(
       preview: executionOutput.outputs as any,
       type: stepType as unknown as ChannelTypeEnum,
     },
+    exampleMasterPayload: augmentedPayload,
   };
 }
 

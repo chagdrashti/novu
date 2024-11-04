@@ -11,7 +11,7 @@ import {
   Workflow,
 } from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { MasterPayload, StepTypeEnum } from '@novu/shared';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 import {
   ChatOutputRendererUsecase,
@@ -21,12 +21,6 @@ import {
   SmsOutputRendererUsecase,
 } from '../output-renderers';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface MasterPayload {
-  subscriber: Record<string, unknown>;
-  payload: Record<string, unknown>;
-  steps: Record<string, unknown>; // step.stepId.unknown
-}
 @Injectable()
 export class ConstructFrameworkWorkflow {
   constructor(

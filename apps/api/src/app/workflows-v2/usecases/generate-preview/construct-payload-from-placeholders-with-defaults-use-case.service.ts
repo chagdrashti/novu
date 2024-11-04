@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { Injectable } from '@nestjs/common';
-import { ControlPreviewIssue, ControlPreviewIssueTypeEnum } from '@novu/shared';
+import { ControlPreviewIssue, ControlPreviewIssueTypeEnum, MasterPayload } from '@novu/shared';
 import _ = require('lodash');
 import { CreateMockPayloadForSingleControlValueUseCase } from '../placeholder-enrichment/payload-preview-value-generator.usecase';
 
@@ -8,22 +8,28 @@ import { CreateMockPayloadForSingleControlValueUseCase } from '../placeholder-en
 export class ConstructPayloadFromPlaceholdersWithDefaultsUseCase {
   constructor(private payloadForSingleControlValueUseCase: CreateMockPayloadForSingleControlValueUseCase) {}
 
-  execute(controlValues?: Record<string, unknown>, payloadValues?: Record<string, unknown>) {
+  execute(
+    controlValues?: Record<string, unknown>,
+    payloadValues?: Record<string, unknown>
+  ): {
+    augmentedPayload: MasterPayload;
+    issues: Record<string, ControlPreviewIssue[]>;
+  } {
     let aggregatedDefaultValues = {};
     const aggregatedDefaultValuesForControl: Record<string, Record<string, unknown>> = {};
     const flattenedValues = flattenJson(controlValues);
 
     for (const controlValueKey in flattenedValues) {
       if (flattenedValues.hasOwnProperty(controlValueKey)) {
-        const defaultValuesForSingleControlValue = this.payloadForSingleControlValueUseCase.execute({
+        const defaultPayloadForASingleControlValue = this.payloadForSingleControlValueUseCase.execute({
           controlValues: flattenedValues,
           controlValueKey,
         });
 
-        if (defaultValuesForSingleControlValue) {
-          aggregatedDefaultValuesForControl[controlValueKey] = defaultValuesForSingleControlValue;
+        if (defaultPayloadForASingleControlValue) {
+          aggregatedDefaultValuesForControl[controlValueKey] = defaultPayloadForASingleControlValue;
         }
-        aggregatedDefaultValues = _.merge(defaultValuesForSingleControlValue, aggregatedDefaultValues);
+        aggregatedDefaultValues = _.merge(defaultPayloadForASingleControlValue, aggregatedDefaultValues);
       }
     }
 

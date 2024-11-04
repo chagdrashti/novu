@@ -1,5 +1,6 @@
 // New HydrateEmailSchemaUseCase class
-import { MasterPayload } from '../construct-framework-workflow';
+
+import { MasterPayload } from '@novu/shared';
 
 export class HydrateEmailSchemaCommand {
   emailEditor: string;
