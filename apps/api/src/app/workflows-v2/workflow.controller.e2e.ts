@@ -498,7 +498,7 @@ describe('Workflow Controller E2E API Testing', () => {
   }
 
   async function getWorkflowStepControlValues(workflow: WorkflowResponseDto, step: StepResponseDto, envId: string) {
-    const value = await getStepData(workflow, step, envId);
+    const value = await getStepData(workflow._id, step._id, envId);
 
     return value.controls.values;
   }
