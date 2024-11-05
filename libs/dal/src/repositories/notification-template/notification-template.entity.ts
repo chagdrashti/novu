@@ -119,7 +119,7 @@ export class StepVariantEntity implements IStepVariant {
 
   stepId?: string;
 
-  issues: StepIssues;
+  issues?: StepIssues;
 
   name?: string;
 

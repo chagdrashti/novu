@@ -30,7 +30,7 @@ export type StepResponseDto = StepDto & {
   _id: string;
   slug: Slug;
   stepId: string;
-  issues: StepIssuesDto;
+  issues?: StepIssuesDto;
 };
 
 export type StepUpdateDto = StepCreateDto & {

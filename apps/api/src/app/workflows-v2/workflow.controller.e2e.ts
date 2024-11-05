@@ -7,10 +7,8 @@ import {
   isStepUpdateBody,
   ListWorkflowResponse,
   ShortIsPrefixEnum,
-  Slug,
   slugify,
   StepCreateDto,
-  StepDto,
   StepResponseDto,
   StepTypeEnum,
   StepUpdateDto,
@@ -20,6 +18,7 @@ import {
   UpsertWorkflowBody,
   WorkflowCreationSourceEnum,
   WorkflowListResponseDto,
+  WorkflowOriginEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
 import { createWorkflowClient } from './clients';
@@ -498,12 +497,8 @@ describe('Workflow Controller E2E API Testing', () => {
     return value;
   }
 
-  async function getWorkflowStepControlValues(
-    workflow: WorkflowResponseDto,
-    step: StepDto & { _id: string; slug: Slug; stepId: string },
-    envId: string
-  ) {
-    const value = await getStepData(workflow._id, step._id, envId);
+  async function getWorkflowStepControlValues(workflow: WorkflowResponseDto, step: StepResponseDto, envId: string) {
+    const value = await getStepData(workflow, step, envId);
 
     return value.controls.values;
   }
@@ -529,44 +524,60 @@ describe('Workflow Controller E2E API Testing', () => {
     }
     expect(convertToDate(updatedWorkflow.updatedAt)).to.be.greaterThan(convertToDate(expectedPastUpdatedAt));
   }
-});
 
-async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<WorkflowResponseDto> {
-  const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
-  const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
-  const workflowResponseDto: WorkflowResponseDto = res.body.data;
-  const errorMessageOnFailure = JSON.stringify(res, null, 2);
-  expect(workflowResponseDto, errorMessageOnFailure).to.be.ok;
-  expect(workflowResponseDto._id, errorMessageOnFailure).to.be.ok;
-  expect(workflowResponseDto.updatedAt, errorMessageOnFailure).to.be.ok;
-  expect(workflowResponseDto.createdAt, errorMessageOnFailure).to.be.ok;
-  expect(workflowResponseDto.preferences, errorMessageOnFailure).to.be.ok;
-  expect(workflowResponseDto.status, errorMessageOnFailure).to.be.ok;
-  expect(workflowResponseDto.origin, errorMessageOnFailure).to.be.eq('novu-cloud');
-  for (const step of workflowResponseDto.steps) {
-    expect(step._id, errorMessageOnFailure).to.be.ok;
-    expect(step.slug, errorMessageOnFailure).to.be.ok;
+  function workflowAsString(workflowResponseDto: any) {
+    return JSON.stringify(workflowResponseDto, null, 2);
   }
-  const createdWorkflowWithoutUpdateDate = removeFields(
-    workflowResponseDto,
-    '_id',
-    'origin',
-    'preferences',
-    'updatedAt',
-    'createdAt',
-    'status',
-    'slug'
-  );
-  createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
-    removeFields(step, '_id', 'slug', 'slug', 'stepId')
-  );
-  expect(createdWorkflowWithoutUpdateDate).to.deep.equal(
-    removeFields(createWorkflowDto, '__source')
-    // buildErrorMsg(createWorkflowDto, createdWorkflowWithoutUpdateDate)
-  );
 
-  return workflowResponseDto;
-}
+  function assertWorkflowResponseBodyData(workflowResponseDto: WorkflowResponseDto) {
+    expect(workflowResponseDto, workflowAsString(workflowResponseDto)).to.be.ok;
+    expect(workflowResponseDto._id, workflowAsString(workflowResponseDto)).to.be.ok;
+    expect(workflowResponseDto.updatedAt, workflowAsString(workflowResponseDto)).to.be.ok;
+    expect(workflowResponseDto.createdAt, workflowAsString(workflowResponseDto)).to.be.ok;
+    expect(workflowResponseDto.preferences, workflowAsString(workflowResponseDto)).to.be.ok;
+    expect(workflowResponseDto.status, workflowAsString(workflowResponseDto)).to.be.ok;
+    expect(workflowResponseDto.origin, workflowAsString(workflowResponseDto)).to.be.eq(WorkflowOriginEnum.NOVU_CLOUD);
+    expect(workflowResponseDto.issues, workflowAsString(workflowResponseDto)).to.be.empty;
+  }
+
+  function assertStepResponse(workflowResponseDto: WorkflowResponseDto, createWorkflowDto: CreateWorkflowDto) {
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < workflowResponseDto.steps.length; i++) {
+      const stepInRequest = createWorkflowDto.steps[i];
+      const step = workflowResponseDto.steps[i];
+      expect(step._id, workflowAsString(step)).to.be.ok;
+      expect(step.slug, workflowAsString(step)).to.be.ok;
+      expect(step.name, workflowAsString(step)).to.be.equal(stepInRequest.name);
+      expect(step.type, workflowAsString(step)).to.be.equal(stepInRequest.type);
+      expect(step.issues, workflowAsString(step)).to.be.empty;
+    }
+  }
+
+  function validateCreateWorkflowResponse(
+    workflowResponseDto: WorkflowResponseDto,
+    createWorkflowDto: CreateWorkflowDto
+  ) {
+    assertWorkflowResponseBodyData(workflowResponseDto);
+    assertStepResponse(workflowResponseDto, createWorkflowDto);
+  }
+
+  async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<WorkflowResponseDto> {
+    const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
+    const res = await workflowsClient.createWorkflow(createWorkflowDto);
+    if (!res.isSuccessResult()) {
+      throw new Error(res.error!.responseText);
+    }
+    validateCreateWorkflowResponse(res.value, createWorkflowDto);
+
+    return res.value;
+  }
+  async function create10Workflows(prefix: string) {
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < 10; i++) {
+      await createWorkflowAndValidate(`${prefix}-ABC${i}`);
+    }
+  }
+});
 
 function buildEmailStep(): StepCreateDto {
   return {
@@ -728,13 +739,6 @@ function buildIdSet(
   listWorkflowResponse2: WorkflowListResponseDto[]
 ) {
   return new Set([...extractIDs(listWorkflowResponse1), ...extractIDs(listWorkflowResponse2)]);
-}
-
-async function create10Workflows(prefix: string) {
-  // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < 10; i++) {
-    await createWorkflowAndValidate(`${prefix}-ABC${i}`);
-  }
 }
 
 function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {

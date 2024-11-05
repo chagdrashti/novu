@@ -12,9 +12,11 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
 import { ValidateWorkflowCommand } from './validate-workflow.command';
 import { ValidateControlValuesAndAddDefaultsUseCase } from '../validate-control-values/validate-control-values-and-add-defaults.usecase';
 
+@Injectable()
 export class ValidateAndPersistWorkflowIssuesUsecase {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
