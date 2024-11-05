@@ -15,6 +15,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { ValidateWorkflowCommand } from './validate-workflow.command';
 import { ValidateControlValuesAndAddDefaultsUseCase } from '../validate-control-values/validate-control-values-and-add-defaults.usecase';
+import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
 
 @Injectable()
 export class ValidateAndPersistWorkflowIssuesUsecase {
@@ -28,8 +29,12 @@ export class ValidateAndPersistWorkflowIssuesUsecase {
     const stepIssues = this.validateSteps(command.workflow.steps, command.stepIdToControlValuesMap);
     const workflowWithIssues = this.updateIssuesOnWorkflow(command.workflow, workflowIssues, stepIssues);
     await this.persistWorkflow(command, workflowWithIssues);
+    console.log('workflowWithIssues', workflowWithIssues.issues);
 
-    return workflowWithIssues;
+    const workflow = await this.getWorkflow(command);
+    console.log('workflowWithIssues2', workflow.issues);
+
+    return workflow;
   }
 
   private async persistWorkflow(command: ValidateWorkflowCommand, workflowWithIssues) {
@@ -42,6 +47,14 @@ export class ValidateAndPersistWorkflowIssuesUsecase {
         ...workflowWithIssues,
       }
     );
+  }
+  private async getWorkflow(command: ValidateWorkflowCommand) {
+    const newVar = await this.notificationTemplateRepository.findById(command.workflow._id, command.user.environmentId);
+    if (newVar == null) {
+      throw new WorkflowNotFoundException(command.workflow._id);
+    }
+
+    return newVar;
   }
 
   private validateSteps(
@@ -81,6 +94,54 @@ export class ValidateAndPersistWorkflowIssuesUsecase {
   ): Promise<Record<keyof WorkflowResponseDto, RuntimeIssue[]>> {
     // @ts-ignore
     const issues: Record<keyof WorkflowResponseDto, RuntimeIssue[]> = {};
+    await this.addTriggerIdentifierNotUnuiqeIfApplicable(command, issues);
+    this.addNameMissingIfApplicable(command, issues);
+    this.addDescriptionTooLongIfApplicable(command, issues);
+    console.log('issues', issues);
+
+    return issues;
+  }
+
+  private addNameMissingIfApplicable(
+    command: ValidateWorkflowCommand,
+    issues: Record<keyof WorkflowResponseDto, RuntimeIssue[]>
+  ) {
+    if (!command.workflow.name || command.workflow.name.trim() === '') {
+      // eslint-disable-next-line no-param-reassign
+      issues.name = [{ issueType: WorkflowIssueTypeEnum.MISSING_VALUE, message: 'Name is missing' }];
+    }
+  }
+  private addDescriptionTooLongIfApplicable(
+    command: ValidateWorkflowCommand,
+    issues: Record<keyof WorkflowResponseDto, RuntimeIssue[]>
+  ) {
+    if (command.workflow.description && command.workflow.description.length > 160) {
+      // eslint-disable-next-line no-param-reassign
+      issues.description = [
+        { issueType: WorkflowIssueTypeEnum.MAX_LENGTH_ACCESSED, message: 'Description is too long' },
+      ];
+    }
+  }
+  private async addTriggerIdentifierNotUnuiqeIfApplicable(
+    command: ValidateWorkflowCommand,
+    issues: Record<
+      | '_id'
+      | 'slug'
+      | 'updatedAt'
+      | 'createdAt'
+      | 'steps'
+      | 'origin'
+      | 'preferences'
+      | 'status'
+      | 'issues'
+      | 'workflowId'
+      | 'tags'
+      | 'active'
+      | 'name'
+      | 'description',
+      RuntimeIssue[]
+    >
+  ) {
     const findAllByTriggerIdentifier = await this.notificationTemplateRepository.findAllByTriggerIdentifier(
       command.user.environmentId,
       command.workflow.triggers[0].identifier
@@ -95,8 +156,6 @@ export class ValidateAndPersistWorkflowIssuesUsecase {
         },
       ];
     }
-
-    return issues;
   }
 
   private addStepBodyIssues(step: NotificationStepEntity, stepIssues: Required<StepIssuesDto>) {
@@ -117,9 +176,6 @@ export class ValidateAndPersistWorkflowIssuesUsecase {
     const issues = workflowIssues as unknown as Record<string, ControlPreviewIssue[]>;
     const steps = workflow.steps.map((step) => ({ ...step, issues: stepIssues[step._templateId] }));
 
-    const hydratedWorkflowIssues: NotificationTemplateEntity = { ...workflow, steps, issues };
-    console.log('hydratedWorkflowIssues', JSON.stringify(hydratedWorkflowIssues));
-
-    return hydratedWorkflowIssues;
+    return { ...workflow, steps, issues };
   }
 }

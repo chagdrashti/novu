@@ -2,9 +2,11 @@ import {
   DEFAULT_WORKFLOW_PREFERENCES,
   PreferencesResponseDto,
   PreferencesTypeEnum,
+  RuntimeIssue,
   ShortIsPrefixEnum,
   StepResponseDto,
   StepTypeEnum,
+  WorkflowCreateAndUpdateKeys,
   WorkflowListResponseDto,
   WorkflowOriginEnum,
   WorkflowResponseDto,
@@ -16,29 +18,30 @@ import { GetPreferencesResponseDto } from '@novu/application-generic';
 import { buildSlug } from '../../shared/helpers/build-slug';
 
 export function toResponseWorkflowDto(
-  template: NotificationTemplateEntity,
+  persistedWorkflow: NotificationTemplateEntity,
   preferences: GetPreferencesResponseDto | undefined
 ): WorkflowResponseDto {
   const preferencesDto: PreferencesResponseDto = {
     user: preferences?.source[PreferencesTypeEnum.USER_WORKFLOW] || null,
     default: preferences?.source[PreferencesTypeEnum.WORKFLOW_RESOURCE] || DEFAULT_WORKFLOW_PREFERENCES,
   };
-  const workflowName = template.name || 'Missing Name';
+  const workflowName = persistedWorkflow.name || 'Missing Name';
 
   return {
-    _id: template._id,
-    slug: buildSlug(workflowName, ShortIsPrefixEnum.WORKFLOW, template._id),
-    workflowId: template.triggers[0].identifier,
+    _id: persistedWorkflow._id,
+    slug: buildSlug(workflowName, ShortIsPrefixEnum.WORKFLOW, persistedWorkflow._id),
+    workflowId: persistedWorkflow.triggers[0].identifier,
     name: workflowName,
-    tags: template.tags,
-    active: template.active,
+    tags: persistedWorkflow.tags,
+    active: persistedWorkflow.active,
     preferences: preferencesDto,
-    steps: getSteps(template),
-    description: template.description,
-    origin: computeOrigin(template),
-    updatedAt: template.updatedAt || 'Missing Updated At',
-    createdAt: template.createdAt || 'Missing Create At',
+    steps: getSteps(persistedWorkflow),
+    description: persistedWorkflow.description,
+    origin: computeOrigin(persistedWorkflow),
+    updatedAt: persistedWorkflow.updatedAt || 'Missing Updated At',
+    createdAt: persistedWorkflow.createdAt || 'Missing Create At',
     status: WorkflowStatusEnum.ACTIVE,
+    issues: persistedWorkflow.issues as unknown as Record<WorkflowCreateAndUpdateKeys, RuntimeIssue>,
   };
 }
 

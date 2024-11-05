@@ -54,5 +54,6 @@ export class RuntimeIssue {
 }
 export enum WorkflowIssueTypeEnum {
   MISSING_VALUE = 'MISSING_VALUE',
+  MAX_LENGTH_ACCESSED = 'MAX_LENGTH_ACCESSED',
   WORKFLOW_ID_ALREADY_EXIST = 'WORKFLOW_ID_ALREADY_EXIST',
 }

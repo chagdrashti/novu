@@ -17,6 +17,7 @@ import {
   UpsertStepBody,
   UpsertWorkflowBody,
   WorkflowCreationSourceEnum,
+  WorkflowIssueTypeEnum,
   WorkflowListResponseDto,
   WorkflowOriginEnum,
   WorkflowResponseDto,
@@ -34,6 +35,9 @@ const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 const TEST_TAGS = ['test'];
 let session: UserSession;
 
+const LONG_DESCRIPTION = `XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`;
 describe('Workflow Controller E2E API Testing', () => {
   let workflowsClient: ReturnType<typeof createWorkflowClient>;
 
@@ -88,6 +92,21 @@ describe('Workflow Controller E2E API Testing', () => {
           }
         }
       }
+    });
+    it('Creating workflow with body issues should show in issues field', async () => {
+      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto('nameSuffix');
+      const dtoWithoutName = { ...createWorkflowDto, description: LONG_DESCRIPTION };
+
+      const res = await workflowsClient.createWorkflow(dtoWithoutName);
+      if (!res.isSuccessResult()) {
+        throw new Error(res.error!.responseText);
+      }
+      const workflowCreated: WorkflowResponseDto = res.value;
+      expect(workflowCreated.issues, JSON.stringify(workflowCreated)).to.be.ok;
+      expect(workflowCreated.issues?.description).to.be.ok;
+      expect(workflowCreated.issues?.description[0]?.issueType, JSON.stringify(workflowCreated.issues)).to.be.equal(
+        WorkflowIssueTypeEnum.MAX_LENGTH_ACCESSED
+      );
     });
   });
 
@@ -537,7 +556,7 @@ describe('Workflow Controller E2E API Testing', () => {
     expect(workflowResponseDto.preferences, workflowAsString(workflowResponseDto)).to.be.ok;
     expect(workflowResponseDto.status, workflowAsString(workflowResponseDto)).to.be.ok;
     expect(workflowResponseDto.origin, workflowAsString(workflowResponseDto)).to.be.eq(WorkflowOriginEnum.NOVU_CLOUD);
-    expect(workflowResponseDto.issues, workflowAsString(workflowResponseDto)).to.be.empty;
+    expect(Object.keys(workflowResponseDto.issues || {}).length, workflowAsString(workflowResponseDto)).to.be.equal(0);
   }
 
   function assertStepResponse(workflowResponseDto: WorkflowResponseDto, createWorkflowDto: CreateWorkflowDto) {
@@ -549,7 +568,8 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(step.slug, workflowAsString(step)).to.be.ok;
       expect(step.name, workflowAsString(step)).to.be.equal(stepInRequest.name);
       expect(step.type, workflowAsString(step)).to.be.equal(stepInRequest.type);
-      expect(step.issues, workflowAsString(step)).to.be.empty;
+      expect(Object.keys(step.issues?.body || {}).length, workflowAsString(step)).to.be.eq(0);
+      expect(Object.keys(step.issues?.controls || {}).length, workflowAsString(step)).to.be.eq(0);
     }
   }
 
