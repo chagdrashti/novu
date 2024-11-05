@@ -206,7 +206,7 @@ describe('Generate Preview', () => {
   ): Promise<GeneratePreviewResponseDto> {
     const novuRestResult = await workflowsClient.generatePreview(workflowId, stepDatabaseId, dto);
     if (novuRestResult.isSuccessResult()) {
-      console.log('previewResponseDto.exampleMasterPayload', novuRestResult.value.exampleMasterPayload);
+      console.log('previewResponseDto.exampleMasterPayload', novuRestResult.value.previewPayloadExample);
 
       return novuRestResult.value;
     }

@@ -59,14 +59,14 @@ export class ControlPreviewIssue {
   variableName?: string;
   message: string;
 }
-export class MasterPayload {
+export class PreviewPayloadExample {
   subscriber: Record<string, unknown>;
   payload: Record<string, unknown>;
   steps: Record<string, unknown>; // step.stepId.unknown
 }
 
 export class GeneratePreviewResponseDto {
-  exampleMasterPayload: MasterPayload;
+  previewPayloadExample: PreviewPayloadExample;
   issues: Record<string, ControlPreviewIssue[]>;
   result?:
     | {

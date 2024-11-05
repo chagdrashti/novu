@@ -1,4 +1,4 @@
-import { EmailRenderOutput, MasterPayload, TipTapNode } from '@novu/shared';
+import { EmailRenderOutput, PreviewPayloadExample, TipTapNode } from '@novu/shared';
 import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
 import { render } from '@maily-to/render';
@@ -6,18 +6,18 @@ import { RenderCommand } from './render-command';
 import { ExpandEmailEditorSchemaUsecase } from './email-schema-expander.usecase';
 import { HydrateEmailSchemaUseCase } from './hydrate-email-schema.usecase';
 
-export class EmailOutputRendererCommand extends RenderCommand {
-  masterPayload: MasterPayload;
+export class RenderEmailOutputCommand extends RenderCommand {
+  mainPayload: PreviewPayloadExample;
 }
 
 @Injectable()
-export class EmailOutputRendererUsecase {
+export class RenderEmailOutputUsecase {
   constructor(
     private expendEmailEditorSchemaUseCase: ExpandEmailEditorSchemaUsecase,
     private hydrateEmailSchemaUseCase: HydrateEmailSchemaUseCase // Inject the new use case
   ) {}
 
-  async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
+  async execute(renderCommand: RenderEmailOutputCommand): Promise<EmailRenderOutput> {
     const { emailEditor, subject } = EmailStepControlSchema.parse(renderCommand.controlValues);
     const emailSchemaHydrated = this.hydrate(emailEditor, renderCommand);
     const expandedSchema = this.transformForAndShowLogic(emailSchemaHydrated);
@@ -30,10 +30,10 @@ export class EmailOutputRendererUsecase {
     return this.expendEmailEditorSchemaUseCase.execute({ schema: body });
   }
 
-  private hydrate(emailEditor: string, renderCommand: EmailOutputRendererCommand) {
+  private hydrate(emailEditor: string, renderCommand: RenderEmailOutputCommand) {
     const { hydratedEmailSchema } = this.hydrateEmailSchemaUseCase.execute({
       emailEditor,
-      masterPayload: renderCommand.masterPayload,
+      masterPayload: renderCommand.mainPayload,
     });
 
     return hydratedEmailSchema;

@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { Injectable } from '@nestjs/common';
-import { ControlPreviewIssue, ControlPreviewIssueTypeEnum, MasterPayload } from '@novu/shared';
+import { ControlPreviewIssue, ControlPreviewIssueTypeEnum, PreviewPayloadExample } from '@novu/shared';
 import _ = require('lodash');
 import { CreateMockPayloadForSingleControlValueUseCase } from '../placeholder-enrichment/payload-preview-value-generator.usecase';
 
@@ -12,7 +12,7 @@ export class ConstructPayloadFromPlaceholdersWithDefaultsUseCase {
     controlValues?: Record<string, unknown>,
     payloadValues?: Record<string, unknown>
   ): {
-    augmentedPayload: MasterPayload;
+    augmentedPayload: PreviewPayloadExample;
     issues: Record<string, ControlPreviewIssue[]>;
   } {
     let aggregatedDefaultValues = {};

@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { Injectable } from '@nestjs/common';
-import { MasterPayload, TipTapNode } from '@novu/shared';
+import { PreviewPayloadExample, TipTapNode } from '@novu/shared';
 import { z } from 'zod';
 import { HydrateEmailSchemaCommand } from './hydrate-email-schema.command';
 
@@ -20,7 +20,7 @@ export class HydrateEmailSchemaUseCase {
   }
 
   private variableLogic(
-    masterPayload: MasterPayload,
+    masterPayload: PreviewPayloadExample,
     node: TipTapNode & { attrs: { id: string } },
     defaultPayload: Record<string, unknown>,
     content: TipTapNode[],
@@ -36,7 +36,7 @@ export class HydrateEmailSchemaUseCase {
 
   private forNodeLogic(
     node: TipTapNode & { attrs: { each: string } },
-    masterPayload: MasterPayload,
+    masterPayload: PreviewPayloadExample,
     defaultPayload: Record<string, unknown>,
     content: TipTapNode[],
     index: number
@@ -56,7 +56,7 @@ export class HydrateEmailSchemaUseCase {
   }
 
   private showLogic(
-    masterPayload: MasterPayload,
+    masterPayload: PreviewPayloadExample,
     node: TipTapNode & { attrs: { show: string } },
     defaultPayload: Record<string, unknown>
   ) {
@@ -68,7 +68,7 @@ export class HydrateEmailSchemaUseCase {
   private transformContentInPlace(
     content: TipTapNode[],
     defaultPayload: Record<string, unknown>,
-    masterPayload: MasterPayload
+    masterPayload: PreviewPayloadExample
   ) {
     content.forEach((node, index) => {
       if (this.isVariableNode(node)) {
@@ -98,14 +98,14 @@ export class HydrateEmailSchemaUseCase {
     return !!(node.type === 'variable' && node.attrs && 'id' in node.attrs && typeof node.attrs.id === 'string');
   }
 
-  private getResolvedValueRegularPlaceholder(masterPayload: MasterPayload, node) {
+  private getResolvedValueRegularPlaceholder(masterPayload: PreviewPayloadExample, node) {
     const resolvedValue = this.getValueByPath(masterPayload, node.attrs.id);
     const { fallback } = node.attrs;
 
     return resolvedValue || fallback || `{{${node.attrs.id}}}`;
   }
 
-  private getResolvedValueShowPlaceholder(masterPayload: MasterPayload, node) {
+  private getResolvedValueShowPlaceholder(masterPayload: PreviewPayloadExample, node) {
     const resolvedValue = this.getValueByPath(masterPayload, node.attrs.show);
     const { fallback } = node.attrs;
 
@@ -132,7 +132,7 @@ export class HydrateEmailSchemaUseCase {
   }
 
   private getResolvedValueForPlaceholder(
-    masterPayload: MasterPayload,
+    masterPayload: PreviewPayloadExample,
     node: TipTapNode & { attrs: { each: string } },
     itemPointerToDefaultRecord: Record<string, string>
   ) {

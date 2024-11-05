@@ -11,13 +11,13 @@ import {
   Workflow,
 } from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { MasterPayload, StepTypeEnum } from '@novu/shared';
+import { PreviewPayloadExample, StepTypeEnum } from '@novu/shared';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 import {
   ChatOutputRendererUsecase,
-  EmailOutputRendererUsecase,
   InAppOutputRendererUsecase,
   PushOutputRendererUsecase,
+  RenderEmailOutputUsecase,
   SmsOutputRendererUsecase,
 } from '../output-renderers';
 
@@ -26,7 +26,7 @@ export class ConstructFrameworkWorkflow {
   constructor(
     private workflowsRepository: NotificationTemplateRepository,
     private inAppOutputRendererUseCase: InAppOutputRendererUsecase,
-    private emailOutputRendererUseCase: EmailOutputRendererUsecase,
+    private emailOutputRendererUseCase: RenderEmailOutputUsecase,
     private smsOutputRendererUseCase: SmsOutputRendererUsecase,
     private chatOutputRendererUseCase: ChatOutputRendererUsecase,
     private pushOutputRendererUseCase: PushOutputRendererUsecase
@@ -47,7 +47,7 @@ export class ConstructFrameworkWorkflow {
     return workflow(
       newWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
-        const masterPayload: MasterPayload = { payload, subscriber, steps: {} };
+        const masterPayload: PreviewPayloadExample = { payload, subscriber, steps: {} };
         for await (const staticStep of newWorkflow.steps) {
           masterPayload.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
             step,
@@ -74,7 +74,7 @@ export class ConstructFrameworkWorkflow {
   private constructStep(
     step: Step,
     staticStep: NotificationStepEntity,
-    masterPayload: MasterPayload
+    masterPayload: PreviewPayloadExample
   ): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 

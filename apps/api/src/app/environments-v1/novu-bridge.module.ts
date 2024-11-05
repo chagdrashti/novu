@@ -8,10 +8,10 @@ import { ConstructFrameworkWorkflow } from './usecases/construct-framework-workf
 import { NovuBridgeController } from './novu-bridge.controller';
 import {
   ChatOutputRendererUsecase,
-  EmailOutputRendererUsecase,
   ExpandEmailEditorSchemaUsecase,
   InAppOutputRendererUsecase,
   PushOutputRendererUsecase,
+  RenderEmailOutputUsecase,
   SmsOutputRendererUsecase,
 } from './usecases/output-renderers';
 import { HydrateEmailSchemaUseCase } from './usecases/output-renderers/hydrate-email-schema.usecase';
@@ -29,11 +29,11 @@ import { HydrateEmailSchemaUseCase } from './usecases/output-renderers/hydrate-e
     ConstructFrameworkWorkflow,
     GetDecryptedSecretKey,
     InAppOutputRendererUsecase,
-    EmailOutputRendererUsecase,
+    RenderEmailOutputUsecase,
     SmsOutputRendererUsecase,
     ChatOutputRendererUsecase,
     PushOutputRendererUsecase,
-    EmailOutputRendererUsecase,
+    RenderEmailOutputUsecase,
     ExpandEmailEditorSchemaUsecase,
     HydrateEmailSchemaUseCase,
   ],

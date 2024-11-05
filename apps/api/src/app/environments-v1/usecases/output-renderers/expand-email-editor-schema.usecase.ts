@@ -1,18 +1,18 @@
 /* eslint-disable no-param-reassign */
 import { TipTapNode } from '@novu/shared';
-import { ExpendEmailEditorSchemaCommand } from './expend-email-editor-schema-command';
+import { ExpandEmailEditorSchemaCommand } from './expand-email-editor-schema-command';
 
 export class ExpandEmailEditorSchemaUsecase {
-  execute(command: ExpendEmailEditorSchemaCommand): TipTapNode {
-    this.traverseAndAugment(command.schema, undefined);
+  execute(command: ExpandEmailEditorSchemaCommand): TipTapNode {
+    this.processShowAndForControls(command.schema, undefined);
 
     return command.schema;
   }
 
-  private traverseAndAugment(node: TipTapNode, parentNode?: TipTapNode) {
+  private processShowAndForControls(node: TipTapNode, parentNode?: TipTapNode) {
     if (node.content) {
       node.content.forEach((innerNode) => {
-        this.traverseAndAugment(innerNode, node);
+        this.processShowAndForControls(innerNode, node);
       });
     }
     if (this.hasShow(node)) {
@@ -20,17 +20,12 @@ export class ExpandEmailEditorSchemaUsecase {
     } else if (this.hasEach(node)) {
       const newContent = this.expendedForEach(node);
       node.content = newContent;
-      this.removeForNodeAndUpgradeContent(node, newContent, parentNode);
+      if (parentNode && parentNode.content) {
+        this.insertArrayAt(parentNode.content, parentNode.content.indexOf(node), newContent);
+        parentNode.content.splice(parentNode.content.indexOf(node), 1);
+      }
     }
   }
-
-  private removeForNodeAndUpgradeContent(node: TipTapNode, expandedContents: TipTapNode[], parentNode?: TipTapNode) {
-    if (parentNode && parentNode.content) {
-      this.insertArrayAt(parentNode.content, parentNode.content.indexOf(node), expandedContents);
-      parentNode.content.splice(parentNode.content.indexOf(node), 1);
-    }
-  }
-
   private insertArrayAt(array: any[], index: number, newArray: any[]) {
     if (index < 0 || index > array.length) {
       throw new Error('Index out of bounds');
@@ -70,10 +65,24 @@ export class ExpandEmailEditorSchemaUsecase {
     const eachObject = node.attrs.each;
     const templateContent = node.content || [];
 
-    if (this.isOrderedList(templateContent) && templateContent[0].content) {
-      return [{ ...templateContent[0], content: this.regularExpansion(eachObject, templateContent[0].content) }];
-    }
-    if (this.isBulletList(templateContent) && templateContent[0].content) {
+    /*
+     * Due to maily limitations in the current implementation, the location of the for
+     * element is situated on the container of the list making the list a
+     *  child of the for element, if we iterate it we will get the
+     *  wrong behavior of multiple lists instead of list with multiple items.
+     * due to that when we choose the content to iterate in case we find a list we drill down additional level
+     * and iterate on the list items
+     * this prevents us from
+     * 1. item1
+     * 1. item2
+     *
+     * and turns it into
+     * 1.item1
+     * 2.item2
+     * which is the correct behavior
+     *
+     */
+    if ((this.isOrderedList(templateContent) || this.isBulletList(templateContent)) && templateContent[0].content) {
       return [{ ...templateContent[0], content: this.regularExpansion(eachObject, templateContent[0].content) }];
     }
 

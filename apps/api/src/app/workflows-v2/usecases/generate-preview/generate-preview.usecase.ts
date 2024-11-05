@@ -6,7 +6,7 @@ import {
   ControlSchemas,
   GeneratePreviewResponseDto,
   JSONSchemaDto,
-  MasterPayload,
+  PreviewPayloadExample,
   StepTypeEnum,
   WorkflowOriginEnum,
 } from '@novu/shared';
@@ -96,7 +96,7 @@ export class GeneratePreviewUsecase {
     workflowId: string,
     stepId: string | undefined,
     origin: WorkflowOriginEnum | undefined,
-    hydratedPayload: MasterPayload,
+    hydratedPayload: PreviewPayloadExample,
     updatedControlValues: Record<string, unknown>,
     command: GeneratePreviewCommand
   ) {
@@ -151,7 +151,7 @@ function buildResponse(
   missingPayloadVariablesIssue: Record<string, ControlPreviewIssue[]>,
   executionOutput,
   stepType: StepTypeEnum,
-  augmentedPayload: MasterPayload
+  augmentedPayload: PreviewPayloadExample
 ): GeneratePreviewResponseDto {
   return {
     issues: merge(missingValuesIssue, missingPayloadVariablesIssue),
@@ -159,7 +159,7 @@ function buildResponse(
       preview: executionOutput.outputs as any,
       type: stepType as unknown as ChannelTypeEnum,
     },
-    exampleMasterPayload: augmentedPayload,
+    previewPayloadExample: augmentedPayload,
   };
 }
 

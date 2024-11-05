@@ -3,6 +3,6 @@
 import { BaseCommand } from '@novu/application-generic';
 import { TipTapNode } from '@novu/shared';
 
-export class ExpendEmailEditorSchemaCommand extends BaseCommand {
+export class ExpandEmailEditorSchemaCommand extends BaseCommand {
   schema: TipTapNode;
 }
