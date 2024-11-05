@@ -8,7 +8,7 @@ import {
   DialogOverlay,
   DialogPortal,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/primitives/dialog';
 import { useEnvironment } from '@/context/environment/hooks';
 import { WorkflowResponseDto } from '@novu/shared';
 import { UseMutateAsyncFunction } from '@tanstack/react-query';
