@@ -45,7 +45,6 @@ import { toResponseWorkflowDto } from '../../mappers/notification-template-mappe
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
 import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
 import { stepTypeToDefaultDashboardControlSchema } from '../../shared';
-import { mapStepTypeToOutput } from '../../../step-schemas/shared';
 import { ValidateAndPersistWorkflowIssuesUsecase } from './validate-and-persist-workflow-issues.usecase';
 
 function buildUpsertControlValuesCommand(
@@ -78,14 +77,16 @@ export class UpsertWorkflowUseCase {
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
     const workflowForUpdate = await this.queryWorkflow(command);
     const workflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
-    await this.upsertControlValues(workflow, command);
+    const stepIdToControlValuesMap = await this.upsertControlValues(workflow, command);
     const preferences = await this.upsertPreference(command, workflow);
     const validatedWorkflowWithIssues = await this.validateWorkflowUsecase.execute({
+      user: command.user,
       workflow,
       preferences,
       stepIdToControlValuesMap,
     });
-    return toResponseWorkflowDto(workflow, preferences);
+
+    return toResponseWorkflowDto(validatedWorkflowWithIssues, preferences);
   }
 
   private async queryWorkflow(command: UpsertWorkflowCommand): Promise<NotificationTemplateEntity | null> {

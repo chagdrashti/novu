@@ -1,8 +1,10 @@
 import { IsArray, IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
+import { JSONSchema } from 'json-schema-to-ts';
 import { WorkflowResponseDto } from './workflow-response-dto';
 import { Slug, StepTypeEnum, WorkflowPreferences } from '../../types';
 import { StepContentIssueEnum } from '../step-schemas';
 import { StepIssueEnum } from '../step-schemas/step-content-issue.enum';
+
 export class ControlsSchema {
   schema: JSONSchema;
 }

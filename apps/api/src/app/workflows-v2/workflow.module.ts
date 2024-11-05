@@ -27,6 +27,7 @@ import { TransformPlaceholderMapUseCase } from './usecases/placeholder-enrichmen
 import { WorkflowTestDataUseCase } from './usecases/test-data/test-data.usecase';
 import { GetStepDataUsecase } from './usecases/get-step-schema/get-step-data.usecase';
 import { ValidateControlValuesAndAddDefaultsUseCase } from './usecases/validate-control-values/validate-control-values-and-add-defaults.usecase';
+import { ValidateAndPersistWorkflowIssuesUsecase } from './usecases/upsert-workflow/validate-and-persist-workflow-issues.usecase';
 
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],
@@ -35,7 +36,6 @@ import { ValidateControlValuesAndAddDefaultsUseCase } from './usecases/validate-
     CreateWorkflow,
     UpdateWorkflow,
     UpsertWorkflowUseCase,
-    GetWorkflowUseCase,
     ListWorkflowsUseCase,
     DeleteWorkflowUseCase,
     UpsertPreferences,
@@ -52,6 +52,7 @@ import { ValidateControlValuesAndAddDefaultsUseCase } from './usecases/validate-
     TransformPlaceholderMapUseCase,
     ValidateControlValuesAndAddDefaultsUseCase,
     WorkflowTestDataUseCase,
+    ValidateAndPersistWorkflowIssuesUsecase,
   ],
 })
 export class WorkflowModule implements NestModule {

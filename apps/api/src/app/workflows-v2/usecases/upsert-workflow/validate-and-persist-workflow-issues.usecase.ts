@@ -6,8 +6,12 @@ import {
   WorkflowIssueTypeEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateRepository } from '@novu/dal';
-import { NotificationTemplateEntity } from '@novu/dal/src';
+import {
+  ControlValuesEntity,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { ValidateWorkflowCommand } from './validate-workflow.command';
 import { ValidateControlValuesAndAddDefaultsUseCase } from '../validate-control-values/validate-control-values-and-add-defaults.usecase';
 
@@ -17,25 +21,31 @@ export class ValidateAndPersistWorkflowIssuesUsecase {
     private validateControlValuesAndAddDefaultsUseCase: ValidateControlValuesAndAddDefaultsUseCase
   ) {}
 
-  async execute(command: ValidateWorkflowCommand) {
-    const workflowIssues: Record<keyof WorkflowResponseDto, RuntimeIssue[]> = await this.validateWorkflowBody(command);
-    const stepIssues: StepIssuesDto = this.validateSteps(command.workflow.steps, command.stepIdToControlValuesMap);
+  async execute(command: ValidateWorkflowCommand): Promise<NotificationTemplateEntity> {
+    const workflowIssues = await this.validateWorkflowBody(command);
+    const stepIssues = this.validateSteps(command.workflow.steps, command.stepIdToControlValuesMap);
     const workflowWithIssues = this.updateIssuesOnWorkflow(command.workflow, workflowIssues, stepIssues);
+    await this.persistWorkflow(command, workflowWithIssues);
+
+    return workflowWithIssues;
+  }
+
+  private async persistWorkflow(command: ValidateWorkflowCommand, workflowWithIssues) {
     await this.notificationTemplateRepository.update(
       {
         _id: command.workflow._id,
         _environmentId: command.user.environmentId,
       },
-      command.workflow
+      {
+        ...workflowWithIssues,
+      }
     );
-
-    return workflowWithIssues;
   }
 
   private validateSteps(
     steps: NotificationStepEntity[],
     stepIdToControlValuesMap: { [p: string]: ControlValuesEntity }
-  ): Record<string, StepIssuesDto> {
+  ): StepIssuesDto {
     const stepIdToIssues: Record<string, StepIssuesDto> = {};
     for (const step of steps) {
       // @ts-ignore
@@ -102,16 +112,12 @@ export class ValidateAndPersistWorkflowIssuesUsecase {
     workflowIssues: Record<keyof WorkflowResponseDto, RuntimeIssue[]>,
     stepIssues: StepIssuesDto
   ): NotificationTemplateEntity {
-    // eslint-disable-next-line no-param-reassign
-    workflow.issues = workflowIssues as unknown as Record<string, ControlPreviewIssue[]>;
-    workflow.steps = workflow.steps.map((step) => ({ ...step, issues: stepIssues[step._templateId] }));
-    return {
-      ...workflow,
-      steps: ,
-      issues: {
-        ...workflow.issues,
-        ...workflowIssues,
-      },
-    };
+    const issues = workflowIssues as unknown as Record<string, ControlPreviewIssue[]>;
+    const steps = workflow.steps.map((step) => ({ ...step, issues: stepIssues[step._templateId] }));
+
+    const hydratedWorkflowIssues: NotificationTemplateEntity = { ...workflow, steps, issues };
+    console.log('hydratedWorkflowIssues', JSON.stringify(hydratedWorkflowIssues));
+
+    return hydratedWorkflowIssues;
   }
 }

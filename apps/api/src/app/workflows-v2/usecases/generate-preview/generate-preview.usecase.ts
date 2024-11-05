@@ -12,12 +12,14 @@ import { merge } from 'lodash/fp';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { CreateMockPayloadUseCase } from '../placeholder-enrichment/payload-preview-value-generator.usecase';
-import { StepMissingControlsException, StepNotFoundException } from '../../exceptions/step-not-found-exception';
-import { ExtractDefaultsUsecase } from '../get-default-values-from-schema/extract-defaults.usecase';
+import {
+  StepMissingControlsException,
+  StepMissingStepIdException,
+  StepNotFoundException,
+} from '../../exceptions/step-not-found-exception';
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
-import { OriginMissingException, StepIdMissingException } from './step-id-missing.exception';
-import { ValidateControlValuesAndAddDefaultsUseCase } from './validate-control-values-and-add-defaults-use-case.service';
 import { findMissingKeys } from '../../util/usecaseutils';
+import { ValidateControlValuesAndAddDefaultsUseCase } from '../validate-control-values/validate-control-values-and-add-defaults.usecase';
 
 @Injectable()
 export class GeneratePreviewUsecase {
@@ -25,7 +27,6 @@ export class GeneratePreviewUsecase {
     private legacyPreviewStepUseCase: PreviewStep,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private createMockPayloadUseCase: CreateMockPayloadUseCase,
-    private extractDefaultsUseCase: ExtractDefaultsUsecase,
     private validateControlValuesAndAddDefaultsUseCase: ValidateControlValuesAndAddDefaultsUseCase // Inject the new use case
   ) {}
 
@@ -42,7 +43,7 @@ export class GeneratePreviewUsecase {
     const executeOutput = await this.executePreviewUsecase(
       workflowInfo.workflowId,
       workflowInfo.stepId,
-      workflowInfo.origin,
+      workflowInfo.origin || WorkflowOriginEnum.EXTERNAL,
       payloadHydrationInfo.augmentedPayload,
       controlValuesResult.augmentedControlValues,
       command
@@ -68,6 +69,9 @@ export class GeneratePreviewUsecase {
     }
     if (!step.template || !step.template.controls) {
       throw new StepMissingControlsException(command.stepDatabaseId, step);
+    }
+    if (!step.stepId) {
+      throw new StepMissingStepIdException(command.stepDatabaseId, step);
     }
 
     return {
